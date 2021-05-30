@@ -30,7 +30,6 @@ namespace BlazingPizza.Server
         [HttpGet]
         public async Task<ActionResult<List<OrderWithStatus>>> GetOrders()
         {
-            var userId = GetUserId();
             var model = await _mediator.Send(new Features.Queries.GetOrdersByUserId.Query { UserId = GetUserId() });
             return model.Orders.ToList();
 
@@ -39,20 +38,14 @@ namespace BlazingPizza.Server
         [HttpGet("{orderId}")]
         public async Task<ActionResult<OrderWithStatus>> GetOrderWithStatus(int orderId)
         {
-            var order = await _db.Orders
-                .Where(o => o.OrderId == orderId)
-                .Where(o => o.UserId == GetUserId())
-                .Include(o => o.DeliveryLocation)
-                .Include(o => o.Pizzas).ThenInclude(p => p.Special)
-                .Include(o => o.Pizzas).ThenInclude(p => p.Toppings).ThenInclude(t => t.Topping)
-                .SingleOrDefaultAsync();
+            var model = await _mediator.Send(new Features.Queries.GetOrder.Query { OrderId = orderId, UserId = GetUserId() });
 
-            if (order == null)
+            if (model.Order == null)
             {
                 return NotFound();
             }
 
-            return OrderWithStatus.FromOrder(order);
+            return model.Order;
         }
 
         [HttpPost]
