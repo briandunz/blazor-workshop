@@ -1,3 +1,7 @@
+using System.Reflection;
+using BlazingPizza.Server.Features;
+using FluentValidation;
+using MediatR;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -33,6 +37,11 @@ namespace BlazingPizza.Server
 
             services.AddAuthentication()
                 .AddIdentityServerJwt();
+
+            services.AddMediatR(Assembly.GetExecutingAssembly());
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+            services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
