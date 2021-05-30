@@ -1,7 +1,10 @@
-﻿using System.Threading;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace BlazingPizza.Server.Features.Queries
 {
@@ -23,20 +26,32 @@ namespace BlazingPizza.Server.Features.Queries
 
         public class Result
         {
-            // fill in order details
+            public IEnumerable<OrderWithStatus> Orders { get; set; }
         }
 
         public class GetOrdersByUserIdHandler : IRequestHandler<Query, Result>
         {
-            public GetOrdersByUserIdHandler()
+            private readonly PizzaStoreContext _db;
+
+            public GetOrdersByUserIdHandler(PizzaStoreContext db)
             {
-                // retrieve the orders
+                _db = db;
             }
 
             public async Task<Result> Handle(Query request, CancellationToken cancellationToken)
             {
-                await Task.Delay(1); // stubbed out
-                return new Result();
+                var orders = await _db.Orders
+                .Where(o => o.UserId == request.UserId)
+                .Include(o => o.DeliveryLocation)
+                .Include(o => o.Pizzas).ThenInclude(p => p.Special)
+                .Include(o => o.Pizzas).ThenInclude(p => p.Toppings).ThenInclude(t => t.Topping)
+                .OrderByDescending(o => o.CreatedTime)
+                .ToListAsync();
+
+                return new Result
+                {
+                    Orders = orders.Select(o => OrderWithStatus.FromOrder(o)).ToList()
+                };
             }
         }
     }

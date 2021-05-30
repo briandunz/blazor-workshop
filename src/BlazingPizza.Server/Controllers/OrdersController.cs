@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,24 +18,22 @@ namespace BlazingPizza.Server
     public class OrdersController : Controller
     {
         private readonly PizzaStoreContext _db;
+        private readonly IMediator _mediator;
 
-        public OrdersController(PizzaStoreContext db)
+        public OrdersController(PizzaStoreContext db,
+            IMediator mediator)
         {
             _db = db;
+            _mediator = mediator;
         }
 
         [HttpGet]
         public async Task<ActionResult<List<OrderWithStatus>>> GetOrders()
         {
-            var orders = await _db.Orders
-                .Where(o => o.UserId == GetUserId())
-                .Include(o => o.DeliveryLocation)
-                .Include(o => o.Pizzas).ThenInclude(p => p.Special)
-                .Include(o => o.Pizzas).ThenInclude(p => p.Toppings).ThenInclude(t => t.Topping)
-                .OrderByDescending(o => o.CreatedTime)
-                .ToListAsync();
+            var userId = GetUserId();
+            var model = await _mediator.Send(new Features.Queries.GetOrdersByUserId.Query { UserId = GetUserId() });
+            return model.Orders.ToList();
 
-            return orders.Select(o => OrderWithStatus.FromOrder(o)).ToList();
         }
 
         [HttpGet("{orderId}")]
