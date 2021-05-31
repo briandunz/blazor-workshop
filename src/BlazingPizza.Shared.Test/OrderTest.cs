@@ -58,5 +58,27 @@ namespace BlazingPizza.Shared.Test
 
             Assert.Equal(pizzaSpecial1.BasePrice + pizzaSpecial2.BasePrice, order.GetTotalPrice());
         }
+
+        [Fact]
+        public void TotalPriceIsFormattedCorrectly()
+        {
+            var pizzaSpecial = new PizzaSpecial
+            {
+                BasePrice = 11.50M
+            };
+            var pizza = new Pizza
+            {
+                Special = pizzaSpecial,
+                Size = 12,
+                Toppings = new List<PizzaTopping>()
+            };
+            var order = new Order
+            {
+                Pizzas = new List<Pizza> { pizza }
+            };
+
+            Assert.Equal(pizzaSpecial.BasePrice.ToString("0.00"), order.GetFormattedTotalPrice());
+        }
+
     }
 }
