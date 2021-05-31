@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using BlazingPizza;
 using Xunit;
 
 namespace BlazingPizza.Shared.Test
